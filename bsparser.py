@@ -474,8 +474,8 @@ class BSParser():
             elif answer == "2":
                 self.main_menu()
             elif answer == "3":
-                input("Press any key to close window...\n")
-                sys.exit()
+                input("Press Enter key to close window...\n")
+                sys.exit()            
             else:
                 print("\nPlease select a valid option")
 
@@ -498,7 +498,7 @@ class BSParser():
             elif answer == "3":
                 self.main_menu()
             elif answer == "4":
-                input("Press any key to close window...\n")
+                input("Press Enter key to close window...\n")
                 sys.exit()
             else:
                 print("\nPlease select a valid option")
@@ -530,7 +530,7 @@ class BSParser():
                 self.download_menu()
                 break
             elif answer == "4":
-                input("Press any key to close window...\n")
+                input("Press Enter key to close window...\n")
                 sys.exit()
             else:
                 print("\nPlease provide a valid option!")
@@ -552,9 +552,10 @@ def get_path():
 
     for drive in valid_drives:
         for root, dirs, files in os.walk(drive):
-            for d in dirs:
-                if "CustomLevels" in d:
-                   path=os.path.join(root, d)
+            if "\\Beat Saber\\Beat Saber_Data" in root:
+                for d in dirs:
+                    if 'CustomLevels' in d:
+                        path=os.path.join(root, d)
 
     prompt = "\nPlease enter the exact path to your Beat Saber CustomLevels directory or type exit\n>> "
     not_found = "Directory not found please try again or type exit"
