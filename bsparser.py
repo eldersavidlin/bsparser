@@ -559,7 +559,7 @@ class BSParser():
             self.download_menu()
         if "!bsr " in bsr_key:
             bsr_key = bsr_key.replace("!bsr ","").strip()
-        if bsr.isalnum() or "-" in bsr:
+        if bsr_key.isalnum() or "-" in bsr:
             query_response = self.get_request(self.map_detail +bsr_key)
             download_response = self.get_request(self.map_download +bsr_key)
             if query_response:
@@ -597,7 +597,7 @@ class BSParser():
             self.download_menu()
         if "!" in bsr_key:
             bsr_key = bsr_key.replace("!", "")
-        if bsr.isalnum() or "-" in bsr:
+        if bsr_key.isalnum() or "-" in bsr:
             print("Querying beatsaver.com to determine mapper for bsr key {}".format(bsr_key))
             query_response = self.get_request(self.map_detail + bsr_key)
             if query_response:
