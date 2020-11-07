@@ -30,4 +30,4 @@ Feel free to use as you wish! This is just how I find it useful
 
 ### Feedback/Suggestions
 
-Feel free to reach out to my at twitch.tv/eldersavidlin I am always open to feedback or features you would like to see implented
+Feel free to reach out to me at twitch.tv/eldersavidlin I am always open to feedback or features you would like to see implented
