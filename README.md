@@ -13,9 +13,11 @@ Some functionality includes:
 - Delete songs
   - Based on Rating
   - Based on NJS
+  - Based on NPS
 - Create Playlists
   - Based on Rating
   - Based on NJS
+  - Based on NPS
   - Based on a particular mapper
 - Add/remove songs to/from SRM banlist
 
