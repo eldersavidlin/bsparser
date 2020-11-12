@@ -16,6 +16,7 @@ Some functionality includes:
 - Create Playlists
   - Based on Rating
   - Based on NJS
+  - Based on a particular mapper
 - Add/remove songs to/from SRM banlist
 
 All of these actions will update the query files to keep track of songs
