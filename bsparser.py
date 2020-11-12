@@ -290,8 +290,8 @@ class BSParser():
     def get_threshold(self, stat):
         try:
             # If we are gathering data for song rating
-            if stat == "rating":
-                threshold = input("Provide a < or > sign and a number between 0 and 100\nExample: <90 (less than 90) or >90 (greater than 90)\nType exit to go back\n>> ")
+            if stat == "rating" or stat == "njs" or stat == "nps":
+                threshold = input("Provide a < or > sign and a number between 0 and 100\nExample: <50 (less than 50) or >50 (greater than 50)\n>> ")
                 # If user input is < or > then grab that symbol and also validate number is between 0 and 100
                 if threshold[0] == "<":
                     symbol = threshold[0]
@@ -310,29 +310,25 @@ class BSParser():
                     return symbol, num
                 else:
                     print("Please provide valid input such as <70 (less than 70)")
-
-            # If we are gathering data for NJS
-            elif stat == "njs":
-                # If usser input is < or > grab that symbol and validate number is greater than 0
-                threshold = input("Provide a < or > sign and a number\nExample: <16 (less than 16) or >16 (greater than 16)\nType exit to go back\n>> ")
-                if threshold[0] == "<":
-                    symbol = threshold[0]
-                    num = int(threshold[1:].strip())
-                    if num > 0:
-                        return symbol, num
-                    else:
-                        print("Number must be between 0 and 100")
-                elif threshold[0] == ">":
-                    symbol = threshold[0]
-                    num = int(threshold[1:].strip())
-                    if num > 0:
-                        return symbol, num
-                    else:
-                        print("Number must be between 0 and 100")
-                else:
-                    print("Please provide valid input such as <20 (less than 20)")    
         except ValueError as e:
             print(e)
+
+    def setup_selection(self, stat):
+        threshold = self.get_threshold(stat)
+        if threshold:
+            symbol = threshold[0]
+            num = threshold[1]
+            songs = self.get_songs(stat = stat, threshold = num, symbol = symbol)
+            if songs:
+                song_data = songs[0]
+                song_names = songs[1]
+                if len(song_names) >= 1:
+                    selection = self.parse_song_selection(stat = stat, threshold = num, song_names = song_names, song_data = song_data, symbol = symbol)
+                    if selection:
+                        return selection
+                    else:
+                        print("No songs were found with a {} {}{}".format(stat, symbol, num))
+
 
     # Get songs based on users choice of stat and threshold
     def get_songs(self, **kwargs):
@@ -466,6 +462,108 @@ class BSParser():
                 # Return song data and names
                 return song_data, song_names  
 
+            elif stat == "nps" and threshold:
+                # for each song gather its NPS for each difficulty that the song has
+                for k,v in data.items():
+                    nps_list = []
+                    song_name = ""
+                    if "easy" in v:
+                        if v["duration"] > 0:
+                            duration = v["duration"]
+                        else:
+                            duration = v["easy"]["length"]
+                        if v["easy"]["notes"] > 0:
+                            easy = v["easy"]["notes"] / duration
+                            nps_list.append(easy)
+                    else:
+                        easy = None
+                    if "normal" in v:
+                        if v["duration"] > 0:
+                            duration = v["duration"]
+                        else:
+                            duration = v["normal"]["length"]
+                        if v["normal"]["notes"] > 0:
+                            normal = v["normal"]["notes"] / duration
+                            nps_list.append(normal)
+                    else:
+                        normal = None
+                    if "hard" in v:
+                        if v["duration"] > 0:
+                            duration = v["duration"]
+                        else:
+                            duration = v["hard"]["length"]
+                        if v["hard"]["notes"] > 0:
+                            hard = v["hard"]["notes"] / duration
+                            nps_list.append(hard)
+                    else:
+                        hard = None
+                    if "expert" in v:
+                        if v["duration"] > 0:
+                            duration = v["duration"]
+                        else:
+                            duration = v["expert"]["length"]
+                        if v["expert"]["notes"] > 0:
+                            expert = v["expert"]["notes"] / duration
+                            nps_list.append(expert)
+                    else:
+                        expert = None
+                    if "expertPlus" in v:
+                        if v["duration"] > 0:
+                            duration = v["duration"]
+                        else:
+                            duration = v["expertPlus"]["length"]
+                        if v["expertPlus"]["notes"] > 0:
+                            expert_plus = v["expertPlus"]["notes"] / duration
+                            nps_list.append(expert_plus)
+                    else:
+                        expert_plus = None
+                    # If we were successful in getting some NPS data then lets compare it to users threshold
+                    if len(nps_list) > 0:
+                        if symbol == "<":
+                            # If njs is less than user threshold then lets add its data
+                            if max(nps_list) < threshold:
+                                song_data[str(count)] = {
+                                    "song_name": v["song_name"],
+                                    "level_author": v["level_author"],
+                                    "file_path": v["file_path"],
+                                    "key": v["key"],
+                                    "file_hash": v["file_hash"]
+                                    }
+                                difficulty_dict = {
+                                    "easy": easy,
+                                    "normal": normal,
+                                    "hard": hard,
+                                    "expert": expert,
+                                    "expert+": expert_plus
+                                }
+                                song_data[str(count)].update(difficulty_dict)
+                                song_name = "#{} {} ({} - {})".format(count, v["key"], v["song_name"], v["level_author"])
+                                song_names.append(song_name)
+                                count += 1
+                        elif symbol == ">":
+                            # If njs is greater than user threshold then lets add its data
+                            if max(nps_list) > threshold:
+                                song_data[str(count)] = {
+                                    "song_name": v["song_name"],
+                                    "level_author": v["level_author"],
+                                    "file_path": v["file_path"],
+                                    "key": v["key"],
+                                    "file_hash": v["file_hash"]
+                                    }
+                                difficulty_dict = {
+                                    "easy": easy,
+                                    "normal": normal,
+                                    "hard": hard,
+                                    "expert": expert,
+                                    "expert+": expert_plus
+                                }
+                                song_data[str(count)].update(difficulty_dict)
+                                song_name = "#{} {} ({} - {})".format(count, v["key"], v["song_name"], v["level_author"])
+                                song_names.append(song_name)
+                                count += 1
+                # Return song data and names
+                return song_data, song_names  
+
     def parse_song_selection(self, **kwargs):
         for k, v in kwargs.items():
             if "stat" in k:
@@ -508,6 +606,20 @@ class BSParser():
             print("\nThe following {} song(s) have failed to query.".format(len(song_data)))
             for song in song_names:
                 print(song) 
+        elif stat == "nps":
+            print("\nThe following {} song(s) have a {} {}{}.".format(len(song_data), stat, symbol, threshold))
+            for k, v in song_data.items():
+                print("\n#{} {} {} {}".format(k, v["key"], v["song_name"], v["level_author"]))
+                if v["easy"]:
+                    print("Easy: {}".format(v["easy"]))
+                if v["normal"]:
+                    print("Normal: {}".format(v["normal"]))
+                if v["hard"]:
+                    print("Hard: {}".format(v["hard"]))
+                if v["expert"]:
+                    print("Expert: {}".format(v["expert"]))
+                if v["expert+"]:
+                    print("Expert+: {}".format(v["expert+"]))
         # Prompt user to provide song selection
         song_selection = input("\nSelect from the songs above. You can specify specific numbers and/or a range of numbers\nExample: 1-5,11,30-40\nType exit to go back\n>> ")
         # If users selection contains a comma
@@ -569,7 +681,7 @@ class BSParser():
                                     if "file_hash" in v:
                                         hash_list.append(v["file_hash"])
         elif song_selection.lower() == "exit":
-            self.delete_menu()
+            self.main_menu()
         # Else user just suppplies one number
         else:
             try:
@@ -944,51 +1056,33 @@ class BSParser():
             print('''
         Playlist Menu
 
-        1. Create by rating
-        2. Create by NJS
-        3. Create by mapper
-        4. Delete playlist
-        5. Back to previous menu
-        6. Exit
+        1. Create by Rating
+        2. Create by Note Jump Speed (NJS)
+        3. Create by Notes Per Second (NPS)
+        4. Create by Mapper
+        5. Delete Playlist
+        6. Back to Previous Menu
+        7. Exit
                 ''')
 
-            answer = input("Select from one of the options above (1, 2, 3, 4, 5)\n>> ")
+            answer = input("Select from one of the options above (1, 2, 3, 4, 5, 6, 7)\n>> ")
 
             if answer == "1":
-                stat = "rating"
-                threshold = self.get_threshold(stat)
-                if threshold:
-                    symbol = threshold[0]
-                    num = threshold[1]
-                    songs = self.get_songs(stat = stat, threshold = num, symbol = symbol)
-                    if songs:
-                        song_data = songs[0]
-                        song_names = songs[1]
-                        if len(song_names) >= 1:
-                            selection = self.parse_song_selection(stat = stat, threshold = num, song_names = song_names, song_data = song_data, symbol = symbol)
-                            if selection:
-                                hash_list = selection[2]
-                                self.create_playlist(hash_list)
-                        else:
-                            print("No songs were found with a rating {}{}".format(symbol, num))
+                selection = self.setup_selection("rating")
+                if selection:
+                    hash_list = selection[2]
+                    self.create_playlist(hash_list)
             elif answer == "2":
-                stat = "njs"
-                threshold = self.get_threshold(stat)
-                if threshold:
-                    symbol = threshold[0]
-                    num = threshold[1]
-                    songs = self.get_songs(stat = stat, threshold = num, symbol = symbol)
-                    if songs:
-                        song_data = songs[0]
-                        song_names = songs[1]
-                        if len(song_names) >= 1:
-                            selection = self.parse_song_selection(stat = stat, threshold = num, song_names = song_names, song_data = song_data, symbol = symbol)
-                            if selection:
-                                hash_list = selection[2]
-                                self.create_playlist(hash_list)
-                        else:
-                            print("No songs were found with a NJS {}{}".format(symbol, num))
+                selection = self.setup_selection("njs")
+                if selection:
+                    hash_list = selection[2]
+                    self.create_playlist(hash_list)
             elif answer == "3":
+                selection = self.setup_selection("nps")
+                if selection:
+                    hash_list = selection[2]
+                    self.create_playlist(hash_list)
+            elif answer == "4":
                 bsr_key = input("Provide bsr key to a song for the mapper you would like to create a playlist for\n>> ")
                 bsr_key = bsr_key.lower()
                 if "!bsr " in bsr_key:
@@ -1011,7 +1105,7 @@ class BSParser():
                             if v["level_author"] == selected_mapper:
                                 hash_list.append(v["file_hash"])
                         if hash_list:
-                            prompt = input("Are you sure you want to create a playlist of all {} songs that are in your CustomLevels directory (y/n)?\n>> ".format(selected_mapper))
+                            prompt = input("Are you sure you want to create a playlist of all {} {} songs that are in your CustomLevels directory (y/n)?\n>> ".format(len(hash_list), selected_mapper))
                             if prompt.lower() in ["y","yes"]:
                                 self.create_playlist(hash_list)
                             elif prompt.lower() in ["n","no"]:
@@ -1024,11 +1118,11 @@ class BSParser():
                         print("I could not find a query file. Please run the query all songs option")
                 else:
                     print("Please provide a valid key")
-            elif answer == "4":
-                self.delete_playlist()
             elif answer == "5":
-                self.main_menu()
+                self.delete_playlist()
             elif answer == "6":
+                self.main_menu()
+            elif answer == "7":
                 input("Press Enter key to close window...\n")
                 sys.exit() 
 
@@ -1037,53 +1131,37 @@ class BSParser():
             print('''
         Delete Menu
 
-        1. Delete by rating
-        2. Delete by NJS
-        3. Delete songs that have failed to query
-        4. Back to previous menu
-        5. Exit
+        1. Delete by Rating
+        2. Delete by Note Jump Speed (NJS)
+        3. Delete by Notes Per Second (NPS)
+        4. Delete Songs That Have Failed to Query
+        5. Back to Previous Menu
+        6. Exit
                 ''')
-            answer = input("Select from one of the options above (1, 2, 3, 4, 5)\n>> ")
+            answer = input("Select from one of the options above (1, 2, 3, 4, 5, 6)\n>> ")
 
             if answer == "1":
-                stat = "rating"
-                threshold = self.get_threshold(stat)
-                if threshold:
-                    symbol = threshold[0]
-                    num = threshold[1]
-                    songs = self.get_songs(stat = stat, threshold = num, symbol = symbol)
-                    if songs:
-                        song_data = songs[0]
-                        song_names = songs[1]
-                        if len(song_names) >= 1:
-                            selection = self.parse_song_selection(stat = stat, threshold = num, song_names = song_names, song_data = song_data, symbol = symbol)
-                            if selection:
-                                key_list = selection[0]
-                                delete_list = selection[1]
-                                self.delete_songs(delete_list, key_list)
-                                self.query_all_songs("force")
-                        else:
-                            print("No songs were found with a rating {}{}".format(symbol, num))
+                selection = self.setup_selection("rating")
+                if selection:
+                    key_list = selection[0]
+                    delete_list = selection[1]
+                    self.delete_songs(delete_list, key_list)
+                    self.query_all_songs("force")
             elif answer == "2":
-                stat = "njs"
-                threshold = self.get_threshold(stat)
-                if threshold:
-                    symbol = threshold[0]
-                    num = threshold[1]
-                    songs = self.get_songs(stat = stat, threshold = num, symbol = symbol)
-                    if songs:
-                        song_data = songs[0]
-                        song_names = songs[1]
-                        if len(song_names) >= 1:
-                            selection = self.parse_song_selection(stat = stat, threshold = num, song_names = song_names, song_data = song_data, symbol = symbol)
-                            if selection:
-                                key_list = selection[0]
-                                delete_list = selection[1]
-                                self.delete_songs(delete_list, key_list)
-                                self.query_all_songs("force")
-                        else:
-                            print("No songs were found with a NJS {}{}".format(symbol, num))
+                selection = self.setup_selection("njs")
+                if selection:
+                    key_list = selection[0]
+                    delete_list = selection[1]
+                    self.delete_songs(delete_list, key_list)
+                    self.query_all_songs("force")
             elif answer == "3":
+                selection = self.setup_selection("nps")
+                if selection:
+                    key_list = selection[0]
+                    delete_list = selection[1]
+                    self.delete_songs(delete_list, key_list)
+                    self.query_all_songs("force")
+            elif answer == "4":
                 song_names = []
                 count = 1
                 stat = "fail_query"
@@ -1104,9 +1182,9 @@ class BSParser():
                         print("No songs were found in {}".format(self.fail_query_file))
                 elif os.path.isfile(self.fail_query_file):
                     print("{} does not exist therefore you have no songs that have failed to query".format(self.fail_query_file))
-            elif answer == "4":
-                self.main_menu()
             elif answer == "5":
+                self.main_menu()
+            elif answer == "6":
                 input("Press Enter key to close window...\n")
                 sys.exit()            
             else:
@@ -1117,9 +1195,9 @@ class BSParser():
             print('''
         Download Menu
 
-        1. Download one song
-        2. Download all songs from a mapper
-        3. Back to previous menu
+        1. Download One Song
+        2. Download All Songs From a Mapper
+        3. Back to Previous Menu
         4. Exit
                 ''')
             answer = input("Select from one of the options above (1, 2, 3, 4)\n>> ")
@@ -1141,10 +1219,10 @@ class BSParser():
             print('''
         Query Menu
 
-        1. Query all songs
-        2. Retry failed querys
-        3. Delete query files 
-        4. Back to previous menu
+        1. Query All Songs
+        2. Retry Failed Querys
+        3. Delete Query Files 
+        4. Back to Previous Menu
         5. Exit
                 ''')
 
@@ -1198,17 +1276,17 @@ class BSParser():
             print('''
         Beat Saber Parser - Horribly Coded by ElderSavidlin
 
-        1. Query Songs (This must be done at least once before you can delete)
-        2. Delete Songs
-        3. Download Songs
-        4. Ban Songs
-        5. Playlists
+        1. Query Menu (Must query all songs to delete or create playlists)
+        2. Delete Menu
+        3. Download Menu
+        4. Ban Menu
+        5. Playlist Menu
         6. Exit
 
         Your Beat Saber Path: {}
                 '''.format(self.path))
 
-            answer = input("Select from one of the options above (1, 2, 3, 4, 5)\n>> ")
+            answer = input("Select from one of the options above (1, 2, 3, 4, 5, 6)\n>> ")
 
             if answer == "1":
                 self.query_menu()
