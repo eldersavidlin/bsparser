@@ -6,8 +6,7 @@
 """
 TODO:
 1. Add more delete filters
-2. Add option to add songs to SRM ban list after deletion
-3. Check SRM banlist when downloading songs
+2. Check SRM banlist when downloading songs
 
 """
 
@@ -652,31 +651,34 @@ class BSParser():
         if "!bsr " in bsr_key:
             bsr_key = bsr_key.replace("!bsr ","").strip()
         if bsr_key.isalnum() or "-" in bsr:
-            query_response = self.get_request(self.map_detail +bsr_key)
-            download_response = self.get_request(self.map_download +bsr_key)
+            query_response = self.get_request(self.map_detail +bsr_key)       
             if query_response:
                 query_response = json.loads(query_response.text)
                 key = query_response["key"]
                 song_name = query_response["metadata"]["songName"]
                 song_author = query_response["metadata"]["songAuthorName"]
-                if download_response:
-                    download_response = download_response
+                prompt = input("Are you sure you want to download {} ({} - {}) (y/n)?\n>> ".format(key, song_name, song_author))
+                if prompt.lower() in ["y", "yes"]:
                     zip_file = "{}\\{} ({} - {}).zip".format(self.custom_level_path, key, song_name, song_author)
                     unzip_file = "{}\\{} ({} - {})".format(self.custom_level_path, key, song_name, song_author)
                     if not os.path.isdir(unzip_file):
-                        with open(zip_file, 'wb') as f:
-                            f.write(download_response.content)
-                        if os.path.isfile(zip_file):
-                            with zipfile.ZipFile(zip_file, 'r') as zf:
-                                zf.extractall(unzip_file)
-                        if os.path.isdir(unzip_file):
-                            os.remove(zip_file)
-                            print("Downloaded {} ({} - {})".format(key, song_name, song_author))
-                            self.query_all_songs("force")
+                        download_response = self.get_request(self.map_download +bsr_key)
+                        if download_response:
+                            with open(zip_file, 'wb') as f:
+                                f.write(download_response.content)
+                            if os.path.isfile(zip_file):
+                                with zipfile.ZipFile(zip_file, 'r') as zf:
+                                    zf.extractall(unzip_file)
+                            if os.path.isdir(unzip_file):
+                                os.remove(zip_file)
+                                print("Downloaded {} ({} - {})".format(key, song_name, song_author))
+                                self.query_all_songs("force")
+                        else:
+                            print("Failed to download")
                     elif os.path.isdir(unzip_file):
                         print("Song is already in {}".format(self.custom_level_path))
-                else:
-                    print("Failed to download")
+                elif prompt.lower() in ["n", "no"]:
+                    self.download_menu()
             else:
                 print("Failed to query bsr key")
     
@@ -775,7 +777,6 @@ class BSParser():
     # Create playlist based on user song selection
     def create_playlist(self, hash_list):
         hash_dict_list = []
-        
         if os.path.isdir(self.playlist_path):
             playlist_name = input("Please provide a name thats starts with a letter and only contains letters and numbers. No spaces!\n>> ")
             if playlist_name.isalnum():
@@ -793,7 +794,7 @@ class BSParser():
                     confirm = input("File already exists. Are you sure you want to overwrite it (y/n)?\n>> ")
                     if confirm.lower() in ["yes", "y"]:
                         with open(self.playlist_path + "\\" + playlist_name + ".json", 'w') as f:
-                            f.write(json.dumps(playlist_dict, indent=4))
+                            f.write(json.dumps(playlist_dict))
                         if os.path.isfile(self.playlist_path + "\\" + playlist_name + ".json"):
                             print("Succesfully created playlist {} in {}".format(playlist_name, self.playlist_path))
                         else:
@@ -802,7 +803,7 @@ class BSParser():
                         self.playlist_menu()
                 else:
                     with open(self.playlist_path + "\\" + playlist_name + ".json", 'w') as f:
-                        f.write(json.dumps(playlist_dict, indent=4))
+                        f.write(json.dumps(playlist_dict))
                     if os.path.isfile(self.playlist_path + "\\" + playlist_name + ".json"):
                         print("Succesfully created playlist {} in {}".format(playlist_name, self.playlist_path))
                     else:
@@ -892,7 +893,7 @@ class BSParser():
                         key = query_response["key"]
                         song_name = query_response["metadata"]["songName"]
                         song_author = query_response["metadata"]["songAuthorName"]
-                        confirm = input("Are you sure you want to add {} {} - {} to SRM banlist (y/n)?\n>> ".format(key, song_name, song_author))
+                        confirm = input("Are you sure you want to add {} ({} - {}) to SRM banlist (y/n)?\n>> ".format(key, song_name, song_author))
                         if confirm.lower() in ["y", "yes"]:
                             bsr_list.append(key)
                             self.ban_songs(bsr_list)
@@ -916,7 +917,7 @@ class BSParser():
                             key = query_response["key"]
                             song_name = query_response["metadata"]["songName"]
                             song_author = query_response["metadata"]["songAuthorName"]
-                            confirm = input("Are you sure you want to remove {} {} - {} from your SRM banlist (y/n)?\nType exit to exit\n>> ".format(key, song_name, song_author))
+                            confirm = input("Are you sure you want to remove {} ({} - {}) from your SRM banlist (y/n)?\nType exit to exit\n>> ".format(key, song_name, song_author))
                             if confirm.lower() in ["y", "yes"]:
                                 ban_list.remove(bsr_key)
                                 with open(self.banlist_file, 'w') as f:
@@ -945,9 +946,10 @@ class BSParser():
 
         1. Create by rating
         2. Create by NJS
-        3. Delete Playlist
-        4. Back to previous menu
-        5. Exit
+        3. Create by mapper
+        4. Delete playlist
+        5. Back to previous menu
+        6. Exit
                 ''')
 
             answer = input("Select from one of the options above (1, 2, 3, 4, 5)\n>> ")
@@ -987,10 +989,46 @@ class BSParser():
                         else:
                             print("No songs were found with a NJS {}{}".format(symbol, num))
             elif answer == "3":
-                self.delete_playlist()
+                bsr_key = input("Provide bsr key to a song for the mapper you would like to create a playlist for\n>> ")
+                bsr_key = bsr_key.lower()
+                if "!bsr " in bsr_key:
+                    bsr_key = bsr_key.replace("!bsr ","").strip()
+                if bsr_key.isalnum():
+                    if os.path.isfile(self.query_file):
+                        hash_list = []
+                        selected_mapper = None
+                        with open(self.query_file, 'r') as f:
+                            query_file = json.load(f)
+                        for k, v in query_file.items():
+                            if bsr_key == v["key"]:
+                                selected_mapper = v["level_author"]
+                        if selected_mapper == None:
+                            query_response = self.get_request(self.map_detail + bsr_key)
+                            if query_response:
+                                json_query_response = json.loads(query_response.text)
+                                selected_mapper = json_query_response["metadata"]["levelAuthorName"]
+                        for k, v in query_file.items():
+                            if v["level_author"] == selected_mapper:
+                                hash_list.append(v["file_hash"])
+                        if hash_list:
+                            prompt = input("Are you sure you want to create a playlist of all {} songs that are in your CustomLevels directory (y/n)?\n>> ".format(selected_mapper))
+                            if prompt.lower() in ["y","yes"]:
+                                self.create_playlist(hash_list)
+                            elif prompt.lower() in ["n","no"]:
+                                self.playlist_menu()
+                            else:
+                                print("Please provide a valid answer. Try again!")
+                        else:
+                            print("I did not find a mapper in your query file using the key {}".format(bsr_key))
+                    elif not os.path.isfile(self.query_file):
+                        print("I could not find a query file. Please run the query all songs option")
+                else:
+                    print("Please provide a valid key")
             elif answer == "4":
-                self.main_menu()
+                self.delete_playlist()
             elif answer == "5":
+                self.main_menu()
+            elif answer == "6":
                 input("Press Enter key to close window...\n")
                 sys.exit() 
 
