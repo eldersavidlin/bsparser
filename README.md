@@ -27,7 +27,7 @@ All of these actions will update the query files to keep track of songs
 
 There are two ways to setup the script. The easiest way is the first method.
 
-1. Download the latest ZIP file located in releases and extract the zip file to wherever you wish to store it on your computer. After you extract the zip file navigate into the bsparser folder and double click on "bsparser" exe to start the program.
+1. Download the latest ZIP file located in releases and extract the zip file to wherever you wish to store it on your computer. After you extract the zip file navigate into the bsparser folder and double click on "bsparser" exe to start the program. The exe file relies on all the files inside of that folder but you can move the folder to wherever you wish and still run the exe from within it.
 
 2. This method involves installing python on your machine to run the "bsparser.py" python script directly. 
     - First download the "bsparser.py" file from this github repository
@@ -43,7 +43,7 @@ Once you have the script installed and running it will first look for your Beat 
 
 This will then take you to the main menu. Every menu is navigated by typing the number of the listed menu entry and hitting the Enter key. You must first query all of your songs. To do this type "1" and hit enter to go to the "Query Menu". After that hit "1" and enter again to "Query All Songs" It will prompt you with your number of songs and ask if you are sure you wish to query. Type "y" to start the query.
 
-After it is done it saves all of your songs data to a query.json file in your CustomLevels directory which will now all you to use the rest of the options to do as you wish; deleting songs, creating playlists, etc.
+After it is done it saves all of your songs data to a query.json file in your CustomLevels directory which will now allow you to use the rest of the options to do as you wish; deleting songs, creating playlists, etc.
 
 ### The way that I use this script
 
