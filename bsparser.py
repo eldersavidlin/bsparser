@@ -139,6 +139,7 @@ class BSParser():
 
         return next_song, next_fail_song
 
+    # Query all songs in CustomLevels dir and save to query.json
     def query_all_songs(self, query_type):
         responses = []
         count = 0
@@ -313,6 +314,7 @@ class BSParser():
         except ValueError as e:
             print(e)
 
+    # Wrapper for supplying stat and threshold to gather songs for selection
     def setup_selection(self, stat):
         threshold = self.get_threshold(stat)
         if threshold:
@@ -328,7 +330,6 @@ class BSParser():
                         return selection
                     else:
                         print("No songs were found with a {} {}{}".format(stat, symbol, num))
-
 
     # Get songs based on users choice of stat and threshold
     def get_songs(self, **kwargs):
@@ -418,7 +419,7 @@ class BSParser():
                     # If we were successful in getting some NJS data then lets compare it to users threshold
                     if len(njs_list) > 0:
                         if symbol == "<":
-                            # If njs is less than user threshold then lets add its data
+                            # If NJS is less than user threshold then lets add its data
                             if max(njs_list) < threshold:
                                 song_data[str(count)] = {
                                     "song_name": v["song_name"],
@@ -439,7 +440,7 @@ class BSParser():
                                 song_names.append(song_name)
                                 count += 1
                         elif symbol == ">":
-                            # If njs is greater than user threshold then lets add its data
+                            # If NJS is greater than user threshold then lets add its data
                             if max(njs_list) > threshold:
                                 song_data[str(count)] = {
                                     "song_name": v["song_name"],
@@ -520,7 +521,7 @@ class BSParser():
                     # If we were successful in getting some NPS data then lets compare it to users threshold
                     if len(nps_list) > 0:
                         if symbol == "<":
-                            # If njs is less than user threshold then lets add its data
+                            # If NPS is less than user threshold then lets add its data
                             if max(nps_list) < threshold:
                                 song_data[str(count)] = {
                                     "song_name": v["song_name"],
@@ -541,7 +542,7 @@ class BSParser():
                                 song_names.append(song_name)
                                 count += 1
                         elif symbol == ">":
-                            # If njs is greater than user threshold then lets add its data
+                            # If NPS is greater than user threshold then lets add its data
                             if max(nps_list) > threshold:
                                 song_data[str(count)] = {
                                     "song_name": v["song_name"],
@@ -564,6 +565,7 @@ class BSParser():
                 # Return song data and names
                 return song_data, song_names  
 
+    # Display songs to user and get users selection
     def parse_song_selection(self, **kwargs):
         for k, v in kwargs.items():
             if "stat" in k:
@@ -768,7 +770,7 @@ class BSParser():
                 query_response = json.loads(query_response.text)
                 key = query_response["key"]
                 song_name = query_response["metadata"]["songName"]
-                song_author = query_response["metadata"]["songAuthorName"]
+                song_author = query_response["metadata"]["levelAuthorName"]
                 prompt = input("Are you sure you want to download {} ({} - {}) (y/n)?\n>> ".format(key, song_name, song_author))
                 if prompt.lower() in ["y", "yes"]:
                     zip_file = "{}\\{} ({} - {}).zip".format(self.custom_level_path, key, song_name, song_author)
@@ -803,9 +805,9 @@ class BSParser():
         bsr_key = bsr_key.lower()
         if bsr_key == "exit":
             self.download_menu()
-        if "!" in bsr_key:
-            bsr_key = bsr_key.replace("!", "")
-        if bsr_key.isalnum() or "-" in bsr:
+        if "!bsr " in bsr_key:
+            bsr_key = bsr_key.replace("!bsr ", "")
+        if bsr_key.isalnum() or "-" in bsr_key:
             print("Querying beatsaver.com to determine mapper for bsr key {}".format(bsr_key))
             query_response = self.get_request(self.map_detail + bsr_key)
             if query_response:
@@ -977,6 +979,7 @@ class BSParser():
         else:
             print("I could not find your banlist file")
 
+    # Display Ban Menu
     def ban_menu(self):
        while True:
             print('''
@@ -1051,6 +1054,7 @@ class BSParser():
                 input("Press Enter key to close window...\n")
                 sys.exit()  
 
+    # Display Playlist Menu
     def playlist_menu(self):
         while True:
             print('''
@@ -1126,6 +1130,7 @@ class BSParser():
                 input("Press Enter key to close window...\n")
                 sys.exit() 
 
+    # Display Delete Menu
     def delete_menu(self):
         while True:
             print('''
@@ -1190,6 +1195,7 @@ class BSParser():
             else:
                 print("\nPlease select a valid option")
 
+    # Display Download Menu
     def download_menu(self):
         while True:
             print('''
@@ -1214,6 +1220,7 @@ class BSParser():
             else:
                 print("\nPlease select a valid option")
 
+    # Display Query Menu
     def query_menu(self):
         while True:
             print('''
@@ -1271,6 +1278,7 @@ class BSParser():
             else:
                 print("\nPlease provide a valid option")
 
+    # Display Main Menu
     def main_menu(self):
         while True:
             print('''
@@ -1375,6 +1383,7 @@ def get_path():
                 continue
     return path
 
+# Starting point
 def main():
     print("Beat Saber Parser - Horribly Coded by ElderSavidlin")
     bs_parser = BSParser(get_path())
